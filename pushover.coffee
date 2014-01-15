@@ -31,14 +31,14 @@ module.exports = (env) ->
   class Pushover extends env.plugins.Plugin
     
     #pushover instance object
-    var pushover_instance
-    var default_title
-    var default_message
-    var default_url_title
-    var default_url
-    var default_priority
-    var default_sound
-    var default_device
+    pushover_instance
+    default_title
+    default_message
+    default_url_title
+    default_url
+    default_priority
+    default_sound
+    default_device
 
     # ####init()
     # The `init` function is called by the framework to ask your plugin to initialise.
@@ -87,7 +87,7 @@ module.exports = (env) ->
           return Q.fcall -> __("would push \"%s\" \"%s\"", title, message)
         else
           return Q.fcall -> 
-            var msg =
+            msg =
               message: message_content,
               title: title_content,
               sound: 'magic'
