@@ -31,14 +31,14 @@ module.exports = (env) ->
   class Pushover extends env.plugins.Plugin
     
     #pushover instance object
-    pushover_instance
-    default_title
-    default_message
-    default_url_title
-    default_url
-    default_priority
-    default_sound
-    default_device
+    pushover_instance = null
+    default_title = null
+    default_message = null
+    default_url_title = null
+    default_url = null
+    default_priority = null
+    default_sound = null
+    default_device = null
 
     # ####init()
     # The `init` function is called by the framework to ask your plugin to initialise.
@@ -71,8 +71,13 @@ module.exports = (env) ->
       default_device == @conf.get "device"
       
       server.actionManager.addActionHandler(new pushoverActionHandler _env, @framework)
-      
-  class pushoverActionHandler extends ActionHandler
+  
+  # Create a instance of my plugin
+  Pushover = new Pushover
+  # and return it to the framework.
+  return Pushover    
+
+  class pushoverActionHandler extends env.actions.ActionHandler
   
     constructor: (_env, @framework) ->
       env = _env
@@ -97,8 +102,3 @@ module.exports = (env) ->
             #return null
             
   module.exports.pushoverActionHandler = pushoverActionHandler
-  # ###Finally
-  # Create a instance of my plugin
-  Pushover = new Pushover
-  # and return it to the framework.
-  return Pushover
