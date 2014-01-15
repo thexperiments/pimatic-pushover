@@ -95,9 +95,10 @@ module.exports = (env) ->
               
             return Q.fcall -> pushover_instance.send(msg).then(__("pushed message"))
             #return null
+            
+  module.exports.pushoverActionHandler = pushoverActionHandler
   # ###Finally
   # Create a instance of my plugin
   Pushover = new Pushover
   # and return it to the framework.
   return Pushover
-module.exports.pushoverActionHandler = pushoverActionHandler
