@@ -26,9 +26,19 @@ module.exports = (env) ->
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
   push = require( 'pushover-notifications' );
   
-  # ###MyPlugin class
+  # ###Pushover class
   # Create a class that extends the Plugin class and implements the following functions:
-  class pushover extends env.plugins.Plugin
+  class Pushover extends env.plugins.Plugin
+    
+    #pushover instance object
+    var pushover_instance
+    var default_title
+    var default_message
+    var default_url_title
+    var default_url
+    var default_priority
+    var default_sound
+    var default_device
 
     # ####init()
     # The `init` function is called by the framework to ask your plugin to initialise.
@@ -46,51 +56,48 @@ module.exports = (env) ->
       @conf.load config
       @conf.validate()
       # You can use `@conf.get "myOption"` to get a config option.
-
-    # ####createDevice()
-    # The `createDevice` function is called by the framework for every device in the `devices`
-    # section of the config.json file.
-    # 
-    # You should create your device here, if the class of the given deviceConfig matches on of 
-    # yours.
-    # 
-    # #####params:
-    #  * `deviceConfig` the properties the user specified in the `devices` section of the 
-    #    config.json file
-    # 
-    createDevice: (deviceConfig) =>
-      # if the class option of the given config is...
-      switch deviceConfig.class
-        # ...matches your switch class
-        when "PushoverNotification" 
-          # then create a instance of your device and register it
-          @framework.registerDevice(new PushoverNotification deviceConfig)
-          # and return true.
-          return true
-        # ... not matching your classes
+      
+      pushover_instance = new push( {
+        user: @conf.get "user",
+        token: @conf.get "token",
+      });
+      
+      default_title = @conf.get "title"
+      default_message = @conf.get "message"
+      default_url_title = @conf.get "url_title"
+      default_url = @conf.get "url"
+      default_priority = @conf.get "priority"
+      default_sound = @conf.get "sound"
+      default_device == @conf.get "device"
+      
+      server.actionManager.addActionHandler(new pushoverActionHandler _env, @framework)
+      
+  class pushoverActionHandler extends ActionHandler
+  
+    constructor: (_env, @framework) ->
+      env = _env
+  
+    executeAction: (actionString, simulate) =>
+      regExpString = '^push.+"(.*)?"+.+"(.*)?"$'
+      matches = actionString.match (new RegExp regExpString)
+      if matches?
+        title_content = matches[1]
+        message_content = matches[2]
+        if simulate
+          return Q.fcall -> __("would push \"%s\" \"%s\"", title, message)
         else
-          # then return false.
-          return false
-
-  # ###PushoverNotification class
-  # An class to send pushover notifications
-  class PushoverNotification extends env.devices.Actuator
-
-    # ####constructor()
-    # Your constructor function must assign a name and id to the device.
-    constructor: (deviceConfig) ->
-      # Require your actuator config shema
-      @conf = convict require("./actuator-config-shema")
-      # and validate the given device config.
-      @conf.load deviceConfig
-      @conf.validate()
-      # Then assign the given name and id to the object.
-      @name = conf.get "name"
-      @id = conf.get "id"
-
-
+          return Q.fcall -> 
+            var msg =
+              message: message_content,
+              title: title_content,
+              sound: 'magic'
+              priority: 1
+              
+            return Q.fcall -> pushover_instance.send(msg).then(__("pushed message"))
+            #return null
   # ###Finally
   # Create a instance of my plugin
-  myPlugin = new MyPlugin
+  Pushover = new Pushover
   # and return it to the framework.
-  return myPlugin
+  return Pushover
+module.exports.pushoverActionHandler = pushoverActionHandler

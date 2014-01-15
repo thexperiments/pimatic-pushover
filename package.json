@@ -1,20 +1,20 @@
-{ "name": "pimatic-plugin-template",
-  "description": "The plugin description",
-  "author": "Your Name <you@example.com> (http://your-website)",
-  "main": "my-plugin",
+{ "name": "pimatic-ppushover",
+  "description": "Plugin to send Pushover notifications in pimatic",
+  "author": "Lukas Reinhart <reinhart.lukas@gmail.com> (http://your-website)",
+  "main": "pushover",
   "files": [
-    "my-plugin.coffee",
+    "pushover.coffee",
     "README.md",
-    "my-device-config-shema.coffee",
-    "my-plugin-config-shema.coffee"
+    "pushover-config-shema.coffee"
   ],
-  "version": "0.4.1",
-  "homepage": "http://your-plugin-website",
+  "version": "0.0.1",
+  "homepage": "https://github.com/thexperiments",
   "repository": {
     "type": "git",
-    "url": "git://github.com/sweetpi/pimatic-plugin-template.git"
+    "url": "git@github.com:thexperiments/pimatic-pushover.git"
   },
   "dependencies": {
+    "pushover-notifications": "0.1.6"
   },
   "peerDependencies": {
     "pimatic": "0.4.*"
