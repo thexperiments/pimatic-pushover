@@ -29,7 +29,8 @@ module.exports = (env) ->
   # ###Pushover class
   # Create a class that extends the Plugin class and implements the following functions:
   class Pushover extends env.plugins.Plugin
-    
+    framework: null
+    config: null
     #pushover instance object
     pushover_instance = null
     default_title = null
@@ -50,6 +51,8 @@ module.exports = (env) ->
     #     of the config.json file 
     # 
     init: (app, @framework, config) =>
+      env.logger.info "blah"
+
       # Require your config shema
       @conf = convict require("./pushover-config-shema")
       # and validate the given config.
@@ -57,9 +60,14 @@ module.exports = (env) ->
       @conf.validate()
       # You can use `@conf.get "myOption"` to get a config option.
       
+      user = @conf.get "user"
+      token = @conf.get "token"
+      env.logger.info "user: " + user
+      env.logger.info "user: " + token
+
       pushover_instance = new push( {
-        user: @conf.get "user",
-        token: @conf.get "token",
+        user: user,
+        token: token,
       });
       
       default_title = @conf.get "title"
@@ -70,22 +78,25 @@ module.exports = (env) ->
       default_sound = @conf.get "sound"
       default_device == @conf.get "device"
       
-      server.actionManager.addActionHandler(new pushoverActionHandler _env, @framework)
+      framework.ruleManager.addActionHandler(new pushoverActionHandler config)
+      # framework.ruleManager.executeAction('"log "blah"' false)
   
   # Create a instance of my plugin
-  Pushover = new Pushover
-  # and return it to the framework.
-  return Pushover    
+  plugin = new Pushover 
 
   class pushoverActionHandler extends env.actions.ActionHandler
   
-    constructor: (_env, @framework) ->
-      env = _env
-  
+    constructor: (@config) ->
+      env.logger.info "action handler constructor"
+      return
+
     executeAction: (actionString, simulate) =>
+      env.logger.info "executeAction: " + actionString
+
       regExpString = '^push.+"(.*)?"+.+"(.*)?"$'
       matches = actionString.match (new RegExp regExpString)
       if matches?
+        env.logger.info "executeAction: we have matches"
         title_content = matches[1]
         message_content = matches[2]
         if simulate
@@ -101,4 +112,7 @@ module.exports = (env) ->
             return Q.fcall -> pushover_instance.send(msg).then(__("pushed message"))
             #return null
             
-  module.exports.pushoverActionHandler = pushoverActionHandler
+  #module.exports.pushoverActionHandler = pushoverActionHandler
+
+  # and return it to the framework.
+  return plugin   
