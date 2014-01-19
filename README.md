@@ -1,44 +1,26 @@
-pimatic-plugin-template
+pimatic-pushover
 =======================
 
-A template for creating plugins. Clone this folder from: 
+A plugin for sending [pushover](https://pushover.net/) notifications in pimatic, find it here: 
 
-[https://github.com/sweetpi/pimatic-plugin-template](https://github.com/sweetpi/pimatic-plugin-template)
+[https://github.com/thexperiments/pimatic-pushover](https://github.com/thexperiments/pimatic-pushover)
 
 
-Required Skills
-----------------
+Configuration
+-------------
+You can load the backend by editing your `config.json` to include:
 
- * You should know JavaScript and know how to write JavaScript code.
- * You should know CoffeeScript. If not learn it! It is beatiful and makes things easyer for you. 
-   Just read the [CoffeeScript introduction page](http://coffeescript.org/)
- * You should know [node.js](http://nodejs.org/) and have some basic knowledge about asynchronous 
-   programming. If not read [this](http://book.mixu.net/node/ch7.html)
- * pimatic heavy used promises for aync operations. So check out the 
-   [docs about Q promises](https://github.com/kriskowal/q).
+    { 
+       "plugin": "pushover"
+    }
 
-If you like videos more:
+in the `plugins` section. For all configuration options see 
+[pushover-config-shema](pushover-config-shema.html)
 
- * [Coffeescript](http://www.youtube.com/watch?v=qR5p5s8CMBQ)
- * [About Q promises: Redemption from Callback Hell](http://www.youtube.com/watch?v=hf1T_AONQJU)
+Currently you can send pushover notifications via action handler within rules.
 
-Files
------
+Example: if it is 08:00 push title:"Good morning!" message:"Good morning Dave!" priority:1
 
-* [my-plugin.coffee](http://sweetpi.de/pimatic/docs/pimatic-plugin-template/my-plugin.html): 
-  This should become the main source file of your Plugin. It provides a short source walkthrough.
-* [my-plugin-config-shema.coffee](http://sweetpi.de/pimatic/docs/pimatic-plugin-template/my-plugin-config-shema.html): 
-  Template for config definitions for your
-  plugin.
-* [my-device-config-shema.coffee](http://sweetpi.de/pimatic/docs/pimatic-plugin-template/my-device-config-shema): 
-  Template for config definitions for a device the plugin could provide.
-* package.json: The [npm package specification](https://npmjs.org/doc/json.html).
+in general: if X then push title:"title of the push notification" message:"message for the notification" [priority:-1 - 1]
 
-Where to put the files?
------------------------
-
-Rename the pimatic-plugin-template folder to pimatic-your-plugin and put it in the node_modules 
-parent directory of pimatic.
-
-Feel free to ask questions on github: 
-[https://github.com/sweetpi/pimatic-plugin-template/issues](https://github.com/sweetpi/pimatic-plugin-template/issues)
+Find priorities here at [pushover](https://pushover.net/api#priority) be aware that priority 2 currently crashes pimatic!

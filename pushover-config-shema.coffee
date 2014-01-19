@@ -20,11 +20,11 @@ module.exports =
     doc: "Message for the notification"
     format: String
     default: ""
-  url: #might be overwritten by predicate
+  url: #might be overwritten by predicate, not implemented yet
     doc: "URL which to send with the notification"
     format: "url"
-    default: "http://pimatic.org"
-  url_title: #might be overwritten by predicate
+    default: "https://github.com/thexperiments/pimatic-pushover"
+  url_title: #might be overwritten by predicate, not implemented yet
     doc: "Title of the URL which to send with the notification"
     format: String
     default: ""
@@ -32,11 +32,11 @@ module.exports =
     doc: "Priority of the notification: send as -1 to always send as a quiet notification, 1 to display as high-priority and bypass the user's quiet hours, or 2 to also require confirmation from the user"
     format: "int"
     default: 0
-  sound: #might be overwritten by predicate
+  sound: #might be overwritten by predicate, not implemented yet
     doc: "Sound for the notification, see https://pushover.net/api#sounds"
     format: String
     default: "pushover"
-  device: #might be overwritten by predicate
+  device: #might be overwritten by predicate, not implemented yet
     doc: "device to send the notifcation to"
     format: String
     default: ""
