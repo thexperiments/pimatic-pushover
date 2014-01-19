@@ -24,15 +24,16 @@ module.exports = (env) ->
 
   # Include you own depencies with nodes global require function:
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
-  push = require( 'pushover-notifications' );
+  push = require 'pushover-notifications'
   
+  pushover_instance = null
+
   # ###Pushover class
   # Create a class that extends the Plugin class and implements the following functions:
   class Pushover extends env.plugins.Plugin
     framework: null
     config: null
-    #pushover instance object
-    pushover_instance = null
+
     default_title = null
     default_message = null
     default_url_title = null
@@ -51,32 +52,22 @@ module.exports = (env) ->
     #     of the config.json file 
     # 
     init: (app, @framework, config) =>
-      env.logger.info "blah"
-
       # Require your config shema
       @conf = convict require("./pushover-config-shema")
       # and validate the given config.
       @conf.load config
       @conf.validate()
-      # You can use `@conf.get "myOption"` to get a config option.
+      # You can use `@confmyOption"` to get a config option.
       
-      user = @conf.get "user"
-      token = @conf.get "token"
+      user = config.user
+      token = config.token
       env.logger.info "user: " + user
-      env.logger.info "user: " + token
+      env.logger.info "token: " + token
 
       pushover_instance = new push( {
         user: user,
         token: token,
       });
-      
-      default_title = @conf.get "title"
-      default_message = @conf.get "message"
-      default_url_title = @conf.get "url_title"
-      default_url = @conf.get "url"
-      default_priority = @conf.get "priority"
-      default_sound = @conf.get "sound"
-      default_device == @conf.get "device"
       
       framework.ruleManager.addActionHandler(new pushoverActionHandler config)
       # framework.ruleManager.executeAction('"log "blah"' false)
@@ -87,32 +78,56 @@ module.exports = (env) ->
   class pushoverActionHandler extends env.actions.ActionHandler
   
     constructor: (@config) ->
-      env.logger.info "action handler constructor"
+      env.logger.debug "action handler constructor"
       return
 
     executeAction: (actionString, simulate) =>
-      env.logger.info "executeAction: " + actionString
+      env.logger.debug "executeAction: " + actionString
 
-      regExpString = '^push.+"(.*)?"+.+"(.*)?"$'
+      regExpString = 
+        '^push.+(?:title:"(.*)")\\s*'+
+        '(?:message:"(.*)")\\s*'+
+        '(?:priority:(-?[0-2]))?\\s*$'
+
+      env.logger.debug "executeAction, regExpString: " + regExpString
+
       matches = actionString.match (new RegExp regExpString)
       if matches?
-        env.logger.info "executeAction: we have matches"
+        env.logger.debug "executeAction: we have matches, simulate:#{simulate}"
         title_content = matches[1]
         message_content = matches[2]
+        priority_content = matches[3]
+
         if simulate
-          return Q.fcall -> __("would push \"%s\" \"%s\"", title, message)
+          return Q.fcall -> 
+            env.logger.debug "executeAction: we simulate the action"
         else
+          if !message_content
+            message_content = @config.title
+          if !title_content
+            title_content = @config.message
+
+          default_url_title = @configurl_title
+          default_url = @config.url
+          default_priority = @config.priority
+          default_sound = @config.sound
+          default_device = @config.device
+
           return Q.fcall -> 
             msg =
-              message: message_content,
-              title: title_content,
-              sound: 'magic'
-              priority: 1
-              
-            return Q.fcall -> pushover_instance.send(msg).then(__("pushed message"))
-            #return null
+              message: message_content
+              title: title_content
+              sound: default_sound
+              priority: priority_content
+
+            env.logger.debug "executeAction: we send the message"
+
+            return Q.ninvoke(pushover_instance, "send", msg).then(->
+              Q.fcall env.logger.info "pusover message sent successfully")
             
-  #module.exports.pushoverActionHandler = pushoverActionHandler
+      #return result
+            
+  module.exports.pushoverActionHandler = pushoverActionHandler
 
   # and return it to the framework.
   return plugin   
