@@ -7,7 +7,7 @@
     "README.md",
     "pushover-config-shema.coffee"
   ],
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "https://github.com/thexperiments",
   "repository": {
     "type": "git",
@@ -17,7 +17,7 @@
     "pushover-notifications": "0.1.6"
   },
   "peerDependencies": {
-    "pimatic": "0.4.*"
+    "pimatic": "0.5.*"
   },
   "engines": {
     "node": ">0.8.x",

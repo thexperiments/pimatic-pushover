@@ -22,6 +22,9 @@ module.exports = (env) ->
   # Require the [cassert library](https://github.com/rhoot/cassert).
   assert = env.require 'cassert'
 
+  #Matcher to match the input predicate and supply autocomplete
+  M = env.matcher
+
   # Include you own depencies with nodes global require function:
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
   push = require 'pushover-notifications'
@@ -53,7 +56,7 @@ module.exports = (env) ->
     # 
     init: (app, @framework, config) =>
       # Require your config shema
-      @conf = convict require("./pushover-config-shema")
+      @conf = convict require("./pushover-config-schema")
       # and validate the given config.
       @conf.load config
       @conf.validate()
@@ -61,8 +64,8 @@ module.exports = (env) ->
       
       user = config.user
       token = config.token
-      env.logger.info "user: " + user
-      env.logger.info "token: " + token
+      env.logger.debug "pushover: user= #{user}"
+      env.logger.debug "pushover: token = #{token}"
 
       pushover_instance = new push( {
         user: user,
@@ -78,25 +81,50 @@ module.exports = (env) ->
   class pushoverActionHandler extends env.actions.ActionHandler
   
     constructor: (@config) ->
-      env.logger.debug "action handler constructor"
       return
 
-    executeAction: (actionString, simulate) =>
-      env.logger.debug "executeAction: " + actionString
+    executeAction: (actionString, simulate, context) =>
+      #env.logger.debug "executeAction: " + actionString
 
       regExpString = 
         '^push.+(?:title:"(.*)")\\s*'+
         '(?:message:"(.*)")\\s*'+
         '(?:priority:(-?[0-2]))?\\s*$'
 
-      env.logger.debug "executeAction, regExpString: " + regExpString
+      #env.logger.debug "executeAction, regExpString: " + regExpString
 
       matches = actionString.match (new RegExp regExpString)
-      if matches?
+
+      matchCount = 0
+
+      title_content = null
+      message_content = null
+      priority_content = null
+
+      setTitle = (m, t) => title_content = t
+      setMessage = (m, mc) => message_content = mc
+      setPriority = (m, p) => priority_content = p
+
+      m = M(actionString, context)
+        .match('send ', optional: yes)
+        .match(['push','pushover','notification'])
+
+      next = m.match(' title:').matchString(setTitle)
+      unless next.hadNoMatches()
+        m = next
+
+      next = m.match(' message:').matchString(setMessage)
+      unless next.hadNoMatches()
+        m = next
+
+      next = m.match(' priority:').matchNumber(setPriority)
+      unless next.hadNoMatches()
+        m = next
+      #m.inAnyOrder()
+      m.onEnd( => matchCount++)
+
+      if matchCount is 1
         env.logger.debug "executeAction: we have matches, simulate:#{simulate}"
-        title_content = matches[1]
-        message_content = matches[2]
-        priority_content = matches[3]
 
         if simulate
           return Q.fcall -> 
@@ -106,10 +134,11 @@ module.exports = (env) ->
             message_content = @config.title
           if !title_content
             title_content = @config.message
+          if !priority_content
+            priority_content = @config.priority
 
           default_url_title = @configurl_title
           default_url = @config.url
-          default_priority = @config.priority
           default_sound = @config.sound
           default_device = @config.device
 
@@ -122,9 +151,9 @@ module.exports = (env) ->
 
             env.logger.debug "executeAction: we send the message"
 
-            return Q.ninvoke(pushover_instance, "send", msg).then(->
-              Q.fcall env.logger.info "pusover message sent successfully")
-            
+            return Q.ninvoke(pushover_instance, "send", msg).then(-> __("pusover message sent successfully") )
+      else if matchCount > 1
+        context.addError(""""#{actionString.trim()}" is ambiguous.""")
       #return result
             
   module.exports.pushoverActionHandler = pushoverActionHandler
