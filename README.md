@@ -15,7 +15,7 @@ You can load the backend by editing your `config.json` to include:
     }
 
 in the `plugins` section. For all configuration options see 
-[pushover-config-shema](pushover-config-shema.html)
+[pushover-config-schema](pushover-config-schema.html)
 
 Currently you can send pushover notifications via action handler within rules.
 
