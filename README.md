@@ -15,7 +15,7 @@ You can load the backend by editing your `config.json` to include:
     }
 
 in the `plugins` section. For all configuration options see 
-[pushover-config-schema](pushover-config-schema.html)
+[pushover-config-schema](pushover-config-schema.coffee)
 
 Currently you can send pushover notifications via action handler within rules.
 
