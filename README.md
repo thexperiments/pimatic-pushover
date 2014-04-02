@@ -1,7 +1,7 @@
 pimatic-pushover
 =======================
 
-A plugin for sending [pushover](https://pushover.net/) notifications in pimatic, find it here: 
+A plugin for sending [pushover](https://pushover.net/) notifications in pimatic.
 
 Forked from and original created by: [thexperiments](https://github.com/thexperiments/pimatic-pushover)
 
