@@ -7,17 +7,17 @@
     "README.md",
     "pushover-config-schema.coffee"
   ],
-  "version": "0.0.2",
-  "homepage": "https://github.com/thexperiments",
+  "version": "0.7.0",
+  "homepage": "http://github.com/pimatic/pimatic",
   "repository": {
     "type": "git",
-    "url": "git@github.com:thexperiments/pimatic-pushover.git"
+    "url": "git://github.com/pimatic/pimatic-pushover.git"
   },
   "dependencies": {
     "pushover-notifications": "0.1.6"
   },
   "peerDependencies": {
-    "pimatic": "0.5.*"
+    "pimatic": "0.7.*"
   },
   "engines": {
     "node": ">0.8.x",

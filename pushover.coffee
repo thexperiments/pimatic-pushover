@@ -29,31 +29,12 @@ module.exports = (env) ->
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
   push = require 'pushover-notifications'
   
-  pushover_instance = null
+  pushoverService = null
 
   # ###Pushover class
-  # Create a class that extends the Plugin class and implements the following functions:
   class Pushover extends env.plugins.Plugin
-    framework: null
-    config: null
-
-    default_title = null
-    default_message = null
-    default_url_title = null
-    default_url = null
-    default_priority = null
-    default_sound = null
-    default_device = null
 
     # ####init()
-    # The `init` function is called by the framework to ask your plugin to initialise.
-    #  
-    # #####params:
-    #  * `app` is the [express] instance the framework is using.
-    #  * `framework` the framework itself
-    #  * `config` the properties the user specified as config for your plugin in the `plugins` section
-    #     of the config.json file 
-    # 
     init: (app, @framework, config) =>
       # Require your config shema
       @conf = convict require("./pushover-config-schema")
@@ -67,96 +48,97 @@ module.exports = (env) ->
       env.logger.debug "pushover: user= #{user}"
       env.logger.debug "pushover: token = #{token}"
 
-      pushover_instance = new push( {
+      pushoverService = new push( {
         user: user,
         token: token,
       });
       
-      framework.ruleManager.addActionHandler(new pushoverActionHandler config)
-      # framework.ruleManager.executeAction('"log "blah"' false)
+      @framework.ruleManager.addActionProvider(new PushoverActionProvider @framework, @conf)
   
   # Create a instance of my plugin
   plugin = new Pushover 
 
-  class pushoverActionHandler extends env.actions.ActionHandler
+  class PushoverActionProvider extends env.actions.ActionProvider
   
-    constructor: (@config) ->
+    constructor: (@framework, @conf) ->
       return
 
-    executeAction: (actionString, simulate, context) =>
-      #env.logger.debug "executeAction: " + actionString
+    parseAction: (input, context) =>
 
-      regExpString = 
-        '^push.+(?:title:"(.*)")\\s*'+
-        '(?:message:"(.*)")\\s*'+
-        '(?:priority:(-?[0-2]))?\\s*$'
+      defaultTitle = @conf.get('title')
+      defaultMessage = @conf.get('message')
+      defaultPriority = @conf.get('priority')
+      defaultSound = @conf.get('sound')
+      defaultDevice = @conf.get('device')
 
-      #env.logger.debug "executeAction, regExpString: " + regExpString
+      # Helper to convert 'some text' to [ '"some teyt"' ]
+      strToTokens = (str) => ["\"#{str}\""]
 
-      matches = actionString.match (new RegExp regExpString)
+      titleTokens = strToTokens defaultTitle
+      messageTokens = strToTokens defaultMessage
+      priority = defaultPriority
+      sound = defaultSound
+      device = defaultDevice
 
-      matchCount = 0
+      setTitle = (m, tokens) => titleTokens = tokens
+      setMessage = (m, tokens) => messageTokens = tokens
+      setPriority = (m, p) => priority = p
 
-      title_content = null
-      message_content = null
-      priority_content = null
-
-      setTitle = (m, t) => title_content = t
-      setMessage = (m, mc) => message_content = mc
-      setPriority = (m, p) => priority_content = p
-
-      m = M(actionString, context)
+      m = M(input, context)
         .match('send ', optional: yes)
         .match(['push','pushover','notification'])
 
-      next = m.match(' title:').matchString(setTitle)
-      unless next.hadNoMatches()
-        m = next
+      next = m.match(' title:').matchStringWithVars(setTitle)
+      if next.hadMatches() then m = next
 
-      next = m.match(' message:').matchString(setMessage)
-      unless next.hadNoMatches()
-        m = next
+      next = m.match(' message:').matchStringWithVars(setMessage)
+      if next.hadMatches() then m = next
 
       next = m.match(' priority:').matchNumber(setPriority)
-      unless next.hadNoMatches()
-        m = next
-      #m.inAnyOrder()
-      m.onEnd( => matchCount++)
+      if next.hadMatches() then m = next
 
-      if matchCount is 1
-        env.logger.debug "executeAction: we have matches, simulate:#{simulate}"
+      if m.hadMatches()
+        match = m.getLongestFullMatch()
 
-        if simulate
-          return Q.fcall -> 
-            env.logger.debug "executeAction: we simulate the action"
-        else
-          if !message_content
-            message_content = @config.title
-          if !title_content
-            title_content = @config.message
-          if !priority_content
-            priority_content = @config.priority
+        assert Array.isArray(titleTokens)
+        assert Array.isArray(messageTokens)
+        assert(not isNaN(priority))
 
-          default_url_title = @configurl_title
-          default_url = @config.url
-          default_sound = @config.sound
-          default_device = @config.device
-
-          return Q.fcall -> 
-            msg =
-              message: message_content
-              title: title_content
-              sound: default_sound
-              priority: priority_content
-
-            env.logger.debug "executeAction: we send the message"
-
-            return Q.ninvoke(pushover_instance, "send", msg).then(-> __("pusover message sent successfully") )
-      else if matchCount > 1
-        context.addError(""""#{actionString.trim()}" is ambiguous.""")
-      #return result
+        return {
+          token: match
+          nextInput: input.substring(match.length)
+          actionHandler: new PushoverActionHandler(
+            @framework, titleTokens, messageTokens, priority, sound, device
+          )
+        }
             
-  module.exports.pushoverActionHandler = pushoverActionHandler
+
+  class PushoverActionHandler extends env.actions.ActionHandler 
+
+    constructor: (@framework, @titleTokens, @messageTokens, @priority, @sound, @device) ->
+
+    executeAction: (simulate, context) ->
+      Q.all( [
+        @framework.variableManager.evaluateStringExpression(@titleTokens)
+        @framework.variableManager.evaluateStringExpression(@messageTokens)
+      ]).then( ([title, message]) =>
+        if simulate
+          # just return a promise fulfilled with a description about what we would do.
+          return __("would push message \"%s\" with title \"%s\"", message, title)
+        else
+          msg = {
+            message: message
+            title: title
+            sound: @sound
+            priority: @priority
+          }
+
+          return Q.ninvoke(pushoverService, "send", msg).then( => 
+              __("pusover message sent successfully") 
+          )
+      )
+
+  module.exports.PushoverActionHandler = PushoverActionHandler
 
   # and return it to the framework.
   return plugin   
