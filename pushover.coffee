@@ -51,7 +51,7 @@ module.exports = (env) ->
       pushoverService = new push( {
         user: user,
         token: token,
-      });
+      })
       
       @framework.ruleManager.addActionProvider(new PushoverActionProvider @framework, @conf)
   
@@ -134,7 +134,7 @@ module.exports = (env) ->
           }
 
           return Q.ninvoke(pushoverService, "send", msg).then( => 
-              __("pusover message sent successfully") 
+            __("pusover message sent successfully") 
           )
       )
 
