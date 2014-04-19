@@ -134,7 +134,7 @@ module.exports = (env) ->
           }
 
           return Q.ninvoke(pushoverService, "send", msg).then( => 
-            __("pusover message sent successfully") 
+            __("pushover message sent successfully") 
           )
       )
 
