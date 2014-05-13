@@ -89,16 +89,16 @@ module.exports = (env) ->
         .match(['push','pushover','notification'])
 
       next = m.match(' title:').matchStringWithVars(setTitle)
-      if next.hadMatches() then m = next
+      if next.hadMatch() then m = next
 
       next = m.match(' message:').matchStringWithVars(setMessage)
-      if next.hadMatches() then m = next
+      if next.hadMatch() then m = next
 
       next = m.match(' priority:').matchNumber(setPriority)
-      if next.hadMatches() then m = next
+      if next.hadMatch() then m = next
 
-      if m.hadMatches()
-        match = m.getLongestFullMatch()
+      if m.hadMatch()
+        match = m.getFullMatch()
 
         assert Array.isArray(titleTokens)
         assert Array.isArray(messageTokens)
