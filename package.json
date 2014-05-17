@@ -7,7 +7,7 @@
     "README.md",
     "pushover-config-schema.coffee"
   ],
-  "version": "0.7.1",
+  "version": "0.7.2",
   "homepage": "http://github.com/pimatic/pimatic",
   "repository": {
     "type": "git",
