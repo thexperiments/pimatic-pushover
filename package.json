@@ -13,6 +13,7 @@
     "type": "git",
     "url": "git://github.com/pimatic/pimatic-pushover.git"
   },
+  "configSchema": "pushover-config-schema.coffee",
   "dependencies": {
     "pushover-notifications": "0.1.6"
   },

@@ -9,23 +9,9 @@
 # and classes. See the [startup.coffee](http://sweetpi.de/pimatic/docs/startup.html) for details.
 module.exports = (env) ->
 
-  # ###require modules included in pimatic
-  # To require modules that are included in pimatic use `env.require`. For available packages take 
-  # a look at the dependencies section in pimatics package.json
-
-  # Require [convict](https://github.com/mozilla/node-convict) for config validation.
-  convict = env.require "convict"
-
-  # Require the [Q](https://github.com/kriskowal/q) promise library
   Q = env.require 'q'
-
-  # Require the [cassert library](https://github.com/rhoot/cassert).
   assert = env.require 'cassert'
-
-  #Matcher to match the input predicate and supply autocomplete
   M = env.matcher
-
-  # Include you own depencies with nodes global require function:
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
   push = require 'pushover-notifications'
   
@@ -36,12 +22,6 @@ module.exports = (env) ->
 
     # ####init()
     init: (app, @framework, config) =>
-      # Require your config shema
-      @conf = convict require("./pushover-config-schema")
-      # and validate the given config.
-      @conf.load config
-      @conf.validate()
-      # You can use `@confmyOption"` to get a config option.
       
       user = config.user
       token = config.token
@@ -53,25 +33,25 @@ module.exports = (env) ->
         token: token,
       })
       
-      @framework.ruleManager.addActionProvider(new PushoverActionProvider @framework, @conf)
+      @framework.ruleManager.addActionProvider(new PushoverActionProvider @framework, config)
   
   # Create a instance of my plugin
   plugin = new Pushover 
 
   class PushoverActionProvider extends env.actions.ActionProvider
   
-    constructor: (@framework, @conf) ->
+    constructor: (@framework, @config) ->
       return
 
     parseAction: (input, context) =>
 
-      defaultTitle = @conf.get('title')
-      defaultMessage = @conf.get('message')
-      defaultPriority = @conf.get('priority')
-      defaultSound = @conf.get('sound')
-      defaultDevice = @conf.get('device')
+      defaultTitle = @config.title
+      defaultMessage = @config.message
+      defaultPriority = @config.priority
+      defaultSound = @config.sound
+      defaultDevice = @config.device
 
-      # Helper to convert 'some text' to [ '"some teyt"' ]
+      # Helper to convert 'some text' to [ '"some text"' ]
       strToTokens = (str) => ["\"#{str}\""]
 
       titleTokens = strToTokens defaultTitle
