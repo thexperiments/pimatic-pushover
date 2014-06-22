@@ -27,9 +27,9 @@ module.exports = {
       type: "string"
       default: ""
     priority: #might be overwritten by predicate
-      description:"""Priority of the notification: send as -1 to always send as a quiet notification, 1 
-        to display as high-priority and bypass the user's quiet hours, or 2 to also require 
-        confirmation from the user"""
+      description:"""Priority of the notification: send as -1 to always send as a quiet 
+        notification, 1 to display as high-priority and bypass the user's quiet hours, or 2 to 
+        also require confirmation from the user"""
       type: "integer"
       default: 0
     sound: #might be overwritten by predicate, not implemented yet
