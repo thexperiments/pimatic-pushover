@@ -1,15 +1,16 @@
 module.exports = {
   title: "pushover config options"
   type: "object"
+  required: ["user", "token"]
   properties: 
     user:
       description:"Pushover user hash"
       type: "string"
-      default: ""
+      required: yes
     token:
       description:"Pushover token"
-      type: "string"
       default: ""
+      required: yes
     title: #might be overwritten by predicate
       description:"Title for the notification"
       type: "string"

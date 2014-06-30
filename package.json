@@ -15,7 +15,7 @@
   },
   "configSchema": "pushover-config-schema.coffee",
   "dependencies": {
-    "pushover-notifications": "0.1.6"
+    "pushover-notifications": "0.1.9"
   },
   "peerDependencies": {
     "pimatic": "0.8.*"

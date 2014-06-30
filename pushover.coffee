@@ -31,6 +31,7 @@ module.exports = (env) ->
       pushoverService = new push( {
         user: user,
         token: token,
+        onerror: (message) => env.logger.error("pushover error: #{message}")
       })
       
       @framework.ruleManager.addActionProvider(new PushoverActionProvider @framework, config)
