@@ -13,7 +13,8 @@ module.exports = (env) ->
   assert = env.require 'cassert'
   M = env.matcher
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
-  push = require 'pushover-notifications'; Promise.promisifyAll(push)
+  Pushover = require 'pushover-notifications'
+  Promise.promisifyAll(Pushover.prototype)
   
   pushoverService = null
 
@@ -28,7 +29,7 @@ module.exports = (env) ->
       env.logger.debug "pushover: user= #{user}"
       env.logger.debug "pushover: token = #{token}"
 
-      pushoverService = new push( {
+      pushoverService = new Pushover( {
         user: user,
         token: token,
         onerror: (message) => env.logger.error("pushover error: #{message}")
