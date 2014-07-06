@@ -9,11 +9,11 @@
 # and classes. See the [startup.coffee](http://sweetpi.de/pimatic/docs/startup.html) for details.
 module.exports = (env) ->
 
-  Q = env.require 'q'
+  Promise = env.require 'bluebird'
   assert = env.require 'cassert'
   M = env.matcher
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
-  push = require 'pushover-notifications'
+  push = require 'pushover-notifications'; Promise.promisifyAll(push)
   
   pushoverService = null
 
@@ -99,7 +99,7 @@ module.exports = (env) ->
     constructor: (@framework, @titleTokens, @messageTokens, @priority, @sound, @device) ->
 
     executeAction: (simulate, context) ->
-      Q.all( [
+      Promise.all( [
         @framework.variableManager.evaluateStringExpression(@titleTokens)
         @framework.variableManager.evaluateStringExpression(@messageTokens)
       ]).then( ([title, message]) =>
@@ -114,7 +114,7 @@ module.exports = (env) ->
             priority: @priority
           }
 
-          return Q.ninvoke(pushoverService, "send", msg).then( => 
+          return pushoverService.sendAsync(msg).then( => 
             __("pushover message sent successfully") 
           )
       )
