@@ -11,15 +11,16 @@ module.exports = (env) ->
 
   Promise = env.require 'bluebird'
   assert = env.require 'cassert'
+  util = env.require 'util'
   M = env.matcher
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
   Pushover = require 'pushover-notifications'
   Promise.promisifyAll(Pushover.prototype)
-  
+
   pushoverService = null
 
   # ###Pushover class
-  class Pushover extends env.plugins.Plugin
+  class PushoverPlugin extends env.plugins.Plugin
 
     # ####init()
     init: (app, @framework, config) =>
@@ -38,7 +39,7 @@ module.exports = (env) ->
       @framework.ruleManager.addActionProvider(new PushoverActionProvider @framework, config)
   
   # Create a instance of my plugin
-  plugin = new Pushover 
+  plugin = new PushoverPlugin()
 
   class PushoverActionProvider extends env.actions.ActionProvider
   
