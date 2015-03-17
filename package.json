@@ -1,4 +1,5 @@
-{ "name": "pimatic-pushover",
+{
+  "name": "pimatic-pushover",
   "description": "Plugin to send Pushover notifications in pimatic",
   "author": "Lukas Reinhart <reinhart.lukas@gmail.com>",
   "main": "pushover",
@@ -7,7 +8,7 @@
     "README.md",
     "pushover-config-schema.coffee"
   ],
-  "version": "0.8.1",
+  "version": "0.8.2",
   "homepage": "http://github.com/pimatic/pimatic",
   "repository": {
     "type": "git",
