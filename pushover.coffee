@@ -66,6 +66,7 @@ module.exports = (env) ->
       setTitle = (m, tokens) => titleTokens = tokens
       setMessage = (m, tokens) => messageTokens = tokens
       setPriority = (m, p) => priority = p
+      setDevice = (m, d) => device = d
 
       m = M(input, context)
         .match('send ', optional: yes)
@@ -78,6 +79,9 @@ module.exports = (env) ->
       if next.hadMatch() then m = next
 
       next = m.match(' priority:').matchNumber(setPriority)
+      if next.hadMatch() then m = next
+
+      next = m.match(' device:').matchString(setDevice)
       if next.hadMatch() then m = next
 
       if m.hadMatch()
@@ -115,6 +119,8 @@ module.exports = (env) ->
             sound: @sound
             priority: @priority
           }
+
+          msg.device = @device if @device? and @device.length > 0
 
           return pushoverService.sendAsync(msg).then( => 
             __("pushover message sent successfully") 
