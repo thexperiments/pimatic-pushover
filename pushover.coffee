@@ -67,6 +67,7 @@ module.exports = (env) ->
       setMessage = (m, tokens) => messageTokens = tokens
       setPriority = (m, p) => priority = p
       setDevice = (m, d) => device = d
+      setSound = (m, d) => sound = d
 
       m = M(input, context)
         .match('send ', optional: yes)
@@ -82,6 +83,9 @@ module.exports = (env) ->
       if next.hadMatch() then m = next
 
       next = m.match(' device:').matchString(setDevice)
+      if next.hadMatch() then m = next
+      
+      next = m.match(' sound:').matchString(setSound)
       if next.hadMatch() then m = next
 
       if m.hadMatch()
