@@ -33,7 +33,7 @@ module.exports = {
         also require confirmation from the user"""
       type: "integer"
       default: 0
-    sound: #might be overwritten by predicate, not implemented yet
+    sound: #might be overwritten by predicate
       description:"Sound for the notification, see https://pushover.net/api#sounds"
       type: "string"
       default: "pushover"
