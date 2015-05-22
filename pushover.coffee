@@ -53,7 +53,10 @@ module.exports = (env) ->
       defaultPriority = @config.priority
       defaultSound = @config.sound
       defaultDevice = @config.device
-
+      defaultRetry = @config.retry
+      defaultExpire = @config.expire
+      defaultCallbackurl = @config.callbackurl
+      
       # Helper to convert 'some text' to [ '"some text"' ]
       strToTokens = (str) => ["\"#{str}\""]
 
@@ -62,12 +65,18 @@ module.exports = (env) ->
       priority = defaultPriority
       sound = defaultSound
       device = defaultDevice
+      retry = defaultRetry
+      expire = defaultExpire
+      callbackurl = defaultCallbackurl
 
       setTitle = (m, tokens) => titleTokens = tokens
       setMessage = (m, tokens) => messageTokens = tokens
       setPriority = (m, p) => priority = p
       setDevice = (m, d) => device = d
       setSound = (m, d) => sound = d
+      setRetry = (m, d) => retry = d
+      setExpire = (m, d) => expire = d
+      setCallbackurl = (m, d) => callbackurl = d
 
       m = M(input, context)
         .match('send ', optional: yes)
@@ -87,6 +96,15 @@ module.exports = (env) ->
       
       next = m.match(' sound:').matchString(setSound)
       if next.hadMatch() then m = next
+      
+      next = m.match(' retry:').matchNumber(setRetry)
+      if next.hadMatch() then m = next
+      
+      next = m.match(' expire:').matchNumber(setExpire)
+      if next.hadMatch() then m = next
+      
+      next = m.match(' callbackurl:').matchString(setCallbackurl)
+      if next.hadMatch() then m = next
 
       if m.hadMatch()
         match = m.getFullMatch()
@@ -99,14 +117,14 @@ module.exports = (env) ->
           token: match
           nextInput: input.substring(match.length)
           actionHandler: new PushoverActionHandler(
-            @framework, titleTokens, messageTokens, priority, sound, device
+            @framework, titleTokens, messageTokens, priority, sound, device, retry, expire, callbackurl
           )
         }
             
 
   class PushoverActionHandler extends env.actions.ActionHandler 
 
-    constructor: (@framework, @titleTokens, @messageTokens, @priority, @sound, @device) ->
+    constructor: (@framework, @titleTokens, @messageTokens, @priority, @sound, @device, @retry, @expire, @callbackurl) ->
 
     executeAction: (simulate, context) ->
       Promise.all( [
@@ -117,12 +135,27 @@ module.exports = (env) ->
           # just return a promise fulfilled with a description about what we would do.
           return __("would push message \"%s\" with title \"%s\"", message, title)
         else
-          msg = {
-            message: message
-            title: title
-            sound: @sound
-            priority: @priority
-          }
+          
+          if @priority is "2"
+            env.logger.debug "pushover debug: priority=2"
+            msg = {
+                message: message
+                title: title
+                sound: @sound
+                priority: @priority
+                retry: @retry
+                expire: @expire
+                callbackurl: @callbackurl
+            }
+          else
+            env.logger.debug "pushover debug: priority=xxx"
+            msg = {
+                message: message
+                title: title
+                sound: @sound
+                priority: @priority
+            }
+            
 
           msg.device = @device if @device? and @device.length > 0
 

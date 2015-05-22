@@ -30,7 +30,7 @@ module.exports = {
     priority: #might be overwritten by predicate
       description:"""Priority of the notification: send as -1 to always send as a quiet 
         notification, 1 to display as high-priority and bypass the user's quiet hours, or 2 to 
-        also require confirmation from the user"""
+        also require confirmation from the user (Receipts not implemented yet)"""
       type: "integer"
       default: 0
     sound: #might be overwritten by predicate
@@ -39,6 +39,18 @@ module.exports = {
       default: "pushover"
     device: #might be overwritten by predicate
       description:"device to send the notifcation to"
+      type: "string"
+      default: ""
+    retry: #might be overwritten by predicate
+      description:"""Only applicable when priority = 2. Sets how often the user is notified (in seconds)"""
+      type: "integer"
+      default: 600
+    expire: #might be overwritten by predicate
+      description:"""Only applicable when priority = 2. Sets how long the user is notified (in seconds)"""
+      type: "integer"
+      default: 3600
+    callbackurl: #might be overwritten by predicate
+      description:"""Only applicable when priority = 2. URL is called when user acknowledges the notification"""
       type: "string"
       default: ""
 }
