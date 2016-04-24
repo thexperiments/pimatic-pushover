@@ -1,4 +1,5 @@
-{ "name": "pimatic-pushover",
+{
+  "name": "pimatic-pushover",
   "description": "Plugin to send Pushover notifications in pimatic",
   "author": "Lukas Reinhart <reinhart.lukas@gmail.com>",
   "main": "pushover",
@@ -7,17 +8,18 @@
     "README.md",
     "pushover-config-schema.coffee"
   ],
-  "version": "0.0.2",
-  "homepage": "https://github.com/thexperiments",
+  "version": "0.8.5",
+  "homepage": "http://github.com/pimatic/pimatic",
   "repository": {
     "type": "git",
-    "url": "git@github.com:thexperiments/pimatic-pushover.git"
+    "url": "git://github.com/pimatic/pimatic-pushover.git"
   },
+  "configSchema": "pushover-config-schema.coffee",
   "dependencies": {
-    "pushover-notifications": "0.1.6"
+    "pushover-notifications": "0.2.1"
   },
   "peerDependencies": {
-    "pimatic": "0.5.*"
+    "pimatic": "0.8.*"
   },
   "engines": {
     "node": ">0.8.x",

@@ -9,154 +9,162 @@
 # and classes. See the [startup.coffee](http://sweetpi.de/pimatic/docs/startup.html) for details.
 module.exports = (env) ->
 
-  # ###require modules included in pimatic
-  # To require modules that are included in pimatic use `env.require`. For available packages take 
-  # a look at the dependencies section in pimatics package.json
-
-  # Require [convict](https://github.com/mozilla/node-convict) for config validation.
-  convict = env.require "convict"
-
-  # Require the [Q](https://github.com/kriskowal/q) promise library
-  Q = env.require 'q'
-
-  # Require the [cassert library](https://github.com/rhoot/cassert).
+  Promise = env.require 'bluebird'
   assert = env.require 'cassert'
-
-  #Matcher to match the input predicate and supply autocomplete
+  util = env.require 'util'
   M = env.matcher
-
-  # Include you own depencies with nodes global require function:
   # Require the [pushover-notifications](https://github.com/qbit/node-pushover) library
-  push = require 'pushover-notifications'
-  
-  pushover_instance = null
+  Pushover = require 'pushover-notifications'
+  Promise.promisifyAll(Pushover.prototype)
+
+  pushoverService = null
 
   # ###Pushover class
-  # Create a class that extends the Plugin class and implements the following functions:
-  class Pushover extends env.plugins.Plugin
-    framework: null
-    config: null
-
-    default_title = null
-    default_message = null
-    default_url_title = null
-    default_url = null
-    default_priority = null
-    default_sound = null
-    default_device = null
+  class PushoverPlugin extends env.plugins.Plugin
 
     # ####init()
-    # The `init` function is called by the framework to ask your plugin to initialise.
-    #  
-    # #####params:
-    #  * `app` is the [express] instance the framework is using.
-    #  * `framework` the framework itself
-    #  * `config` the properties the user specified as config for your plugin in the `plugins` section
-    #     of the config.json file 
-    # 
     init: (app, @framework, config) =>
-      # Require your config shema
-      @conf = convict require("./pushover-config-schema")
-      # and validate the given config.
-      @conf.load config
-      @conf.validate()
-      # You can use `@confmyOption"` to get a config option.
       
       user = config.user
       token = config.token
       env.logger.debug "pushover: user= #{user}"
       env.logger.debug "pushover: token = #{token}"
 
-      pushover_instance = new push( {
+      pushoverService = new Pushover( {
         user: user,
         token: token,
-      });
+        onerror: (message) => env.logger.error("pushover error: #{message}")
+      })
       
-      framework.ruleManager.addActionHandler(new pushoverActionHandler config)
-      # framework.ruleManager.executeAction('"log "blah"' false)
+      @framework.ruleManager.addActionProvider(new PushoverActionProvider @framework, config)
   
   # Create a instance of my plugin
-  plugin = new Pushover 
+  plugin = new PushoverPlugin()
 
-  class pushoverActionHandler extends env.actions.ActionHandler
+  class PushoverActionProvider extends env.actions.ActionProvider
   
-    constructor: (@config) ->
+    constructor: (@framework, @config) ->
       return
 
-    executeAction: (actionString, simulate, context) =>
-      #env.logger.debug "executeAction: " + actionString
+    parseAction: (input, context) =>
 
-      regExpString = 
-        '^push.+(?:title:"(.*)")\\s*'+
-        '(?:message:"(.*)")\\s*'+
-        '(?:priority:(-?[0-2]))?\\s*$'
+      defaultTitle = @config.title
+      defaultMessage = @config.message
+      defaultPriority = @config.priority
+      defaultSound = @config.sound
+      defaultDevice = @config.device
+      defaultRetry = @config.retry
+      defaultExpire = @config.expire
+      defaultCallbackurl = @config.callbackurl
+      
+      # Helper to convert 'some text' to [ '"some text"' ]
+      strToTokens = (str) => ["\"#{str}\""]
 
-      #env.logger.debug "executeAction, regExpString: " + regExpString
+      titleTokens = strToTokens defaultTitle
+      messageTokens = strToTokens defaultMessage
+      priority = defaultPriority
+      sound = defaultSound
+      device = defaultDevice
+      retry = defaultRetry
+      expire = defaultExpire
+      callbackurl = defaultCallbackurl
 
-      matches = actionString.match (new RegExp regExpString)
+      setTitle = (m, tokens) => titleTokens = tokens
+      setMessage = (m, tokens) => messageTokens = tokens
+      setPriority = (m, p) => priority = p
+      setDevice = (m, d) => device = d
+      setSound = (m, d) => sound = d
+      setRetry = (m, d) => retry = d
+      setExpire = (m, d) => expire = d
+      setCallbackurl = (m, d) => callbackurl = d
 
-      matchCount = 0
-
-      title_content = null
-      message_content = null
-      priority_content = null
-
-      setTitle = (m, t) => title_content = t
-      setMessage = (m, mc) => message_content = mc
-      setPriority = (m, p) => priority_content = p
-
-      m = M(actionString, context)
+      m = M(input, context)
         .match('send ', optional: yes)
         .match(['push','pushover','notification'])
 
-      next = m.match(' title:').matchString(setTitle)
-      unless next.hadNoMatches()
-        m = next
+      next = m.match(' title:').matchStringWithVars(setTitle)
+      if next.hadMatch() then m = next
 
-      next = m.match(' message:').matchString(setMessage)
-      unless next.hadNoMatches()
-        m = next
+      next = m.match(' message:').matchStringWithVars(setMessage)
+      if next.hadMatch() then m = next
 
       next = m.match(' priority:').matchNumber(setPriority)
-      unless next.hadNoMatches()
-        m = next
-      #m.inAnyOrder()
-      m.onEnd( => matchCount++)
+      if next.hadMatch() then m = next
 
-      if matchCount is 1
-        env.logger.debug "executeAction: we have matches, simulate:#{simulate}"
+      next = m.match(' device:').matchString(setDevice)
+      if next.hadMatch() then m = next
+      
+      next = m.match(' sound:').matchString(setSound)
+      if next.hadMatch() then m = next
+      
+      next = m.match(' retry:').matchNumber(setRetry)
+      if next.hadMatch() then m = next
+      
+      next = m.match(' expire:').matchNumber(setExpire)
+      if next.hadMatch() then m = next
+      
+      next = m.match(' callbackurl:').matchString(setCallbackurl)
+      if next.hadMatch() then m = next
 
-        if simulate
-          return Q.fcall -> 
-            env.logger.debug "executeAction: we simulate the action"
-        else
-          if !message_content
-            message_content = @config.title
-          if !title_content
-            title_content = @config.message
-          if !priority_content
-            priority_content = @config.priority
+      if m.hadMatch()
+        match = m.getFullMatch()
 
-          default_url_title = @configurl_title
-          default_url = @config.url
-          default_sound = @config.sound
-          default_device = @config.device
+        assert Array.isArray(titleTokens)
+        assert Array.isArray(messageTokens)
+        assert(not isNaN(priority))
 
-          return Q.fcall -> 
-            msg =
-              message: message_content
-              title: title_content
-              sound: default_sound
-              priority: priority_content
-
-            env.logger.debug "executeAction: we send the message"
-
-            return Q.ninvoke(pushover_instance, "send", msg).then(-> __("pusover message sent successfully") )
-      else if matchCount > 1
-        context.addError(""""#{actionString.trim()}" is ambiguous.""")
-      #return result
+        return {
+          token: match
+          nextInput: input.substring(match.length)
+          actionHandler: new PushoverActionHandler(
+            @framework, titleTokens, messageTokens, priority, sound, device, retry, expire, callbackurl
+          )
+        }
             
-  module.exports.pushoverActionHandler = pushoverActionHandler
+
+  class PushoverActionHandler extends env.actions.ActionHandler 
+
+    constructor: (@framework, @titleTokens, @messageTokens, @priority, @sound, @device, @retry, @expire, @callbackurl) ->
+
+    executeAction: (simulate, context) ->
+      Promise.all( [
+        @framework.variableManager.evaluateStringExpression(@titleTokens)
+        @framework.variableManager.evaluateStringExpression(@messageTokens)
+      ]).then( ([title, message]) =>
+        if simulate
+          # just return a promise fulfilled with a description about what we would do.
+          return __("would push message \"%s\" with title \"%s\"", message, title)
+        else
+          
+          if @priority is "2"
+            env.logger.debug "pushover debug: priority=2"
+            msg = {
+                message: message
+                title: title
+                sound: @sound
+                priority: @priority
+                retry: @retry
+                expire: @expire
+                callbackurl: @callbackurl
+            }
+          else
+            env.logger.debug "pushover debug: priority=xxx"
+            msg = {
+                message: message
+                title: title
+                sound: @sound
+                priority: @priority
+            }
+            
+
+          msg.device = @device if @device? and @device.length > 0
+
+          return pushoverService.sendAsync(msg).then( => 
+            __("pushover message sent successfully") 
+          )
+      )
+
+  module.exports.PushoverActionHandler = PushoverActionHandler
 
   # and return it to the framework.
   return plugin   
